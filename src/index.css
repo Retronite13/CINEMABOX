@@ -1,0 +1,90 @@
+/* ============================================
+   DESIGN TOKENS — "The Tier House" cinema theme
+   Change a value here and it ripples through the
+   whole app, since every component reads from these.
+   ============================================ */
+:root {
+  /* Backgrounds */
+  --bg-void: #14110f;       /* page background — theater dark */
+  --bg-surface: #1e1a17;    /* cards, panels */
+  --bg-surface-raised: #262019; /* hover/active surface */
+  --bg-cream: #f3ecdf;      /* light panels (auth form, inputs) */
+
+  /* Ink (text) */
+  --ink: #f3ece0;
+  --ink-muted: #b8aea0;
+  --ink-faint: #7d7468;
+  --ink-on-cream: #1e1a17;
+
+  /* Accents */
+  --marquee-gold: #e8a33d;
+  --marquee-gold-bright: #f6c469;
+  --velvet: #8c2f39;
+  --velvet-bright: #b3404c;
+  --projector-teal: #3f6b6b;
+  --projector-teal-bright: #54908f;
+
+  /* Tier verdict colors */
+  --tier-legendary: #e8a33d;
+  --tier-exceptional: #b3404c;
+  --tier-recommended: #3f6b6b;
+  --tier-passable: #8a7a52;
+  --tier-skip: #5c574e;
+
+  /* Type */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'Space Mono', monospace;
+
+  /* Shape */
+  --radius-card: 4px;
+  --radius-pill: 999px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-void);
+  color: var(--ink);
+  font-family: var(--font-body);
+  /* Subtle film-grain: layered radial noise dots, barely visible,
+     gives the dark background texture instead of flat black. */
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(232, 163, 61, 0.025) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(140, 47, 57, 0.03) 0%, transparent 45%);
+  background-attachment: fixed;
+}
+
+a {
+  color: var(--marquee-gold);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+button {
+  font-family: var(--font-body);
+}
+
+/* Visible keyboard focus everywhere — accessibility floor */
+:focus-visible {
+  outline: 2px solid var(--marquee-gold);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
