@@ -137,9 +137,60 @@
 
 .movie-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
   margin-top: 1.5rem;
+}
+
+.results-count {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+  margin: 0;
+}
+
+/* ===== Pagination ===== */
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 2.5rem 0 1rem;
+}
+
+.pagination button {
+  min-width: 38px;
+  padding: 0.45rem 0.7rem;
+  background: var(--bg-surface);
+  border: 1px solid rgba(243, 236, 224, 0.12);
+  border-radius: 4px;
+  color: var(--ink-muted);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.pagination button:hover:not(:disabled) {
+  border-color: var(--marquee-gold);
+  color: var(--ink);
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-active {
+  border-color: var(--marquee-gold) !important;
+  color: var(--marquee-gold-bright) !important;
+  font-weight: 700;
+}
+
+.pagination-ellipsis {
+  color: var(--ink-faint);
+  padding: 0 0.2rem;
 }
 
 .movie-card {
@@ -781,11 +832,149 @@
   padding: 1.75rem;
 }
 
+/* Left column: poster image stacked above the admin edit panel */
+.modal-left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .modal-poster {
   width: 100%;
   border-radius: 4px;
   object-fit: cover;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* Placeholder shown when a movie genuinely has no poster yet */
+.modal-poster-empty {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  background: var(--bg-void);
+  border: 2px dashed rgba(243, 236, 224, 0.15);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+}
+
+/* ===== Edit Poster Panel (admin only) ===== */
+
+.edit-poster-panel {
+  padding: 0.75rem;
+  background: var(--bg-void);
+  border: 1px solid rgba(243, 236, 224, 0.08);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.edit-poster-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--marquee-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.edit-poster-preview {
+  width: 100%;
+  border-radius: 3px;
+  object-fit: cover;
+  max-height: 160px;
+}
+
+.edit-poster-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.edit-poster-inputs input[type='url'] {
+  padding: 0.45rem 0.55rem;
+  border: 1px solid rgba(243, 236, 224, 0.15);
+  border-radius: 3px;
+  background: var(--bg-surface);
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-family: var(--font-body);
+}
+
+.edit-poster-or {
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  text-align: center;
+  font-family: var(--font-mono);
+}
+
+.edit-poster-upload-btn {
+  padding: 0.4rem 0.7rem;
+  background: transparent;
+  border: 1px solid rgba(243, 236, 224, 0.2);
+  border-radius: 3px;
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-align: center;
+}
+
+.edit-poster-upload-btn:hover {
+  border-color: var(--marquee-gold);
+  color: var(--marquee-gold-bright);
+}
+
+.edit-poster-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.edit-poster-save-btn {
+  flex: 1;
+  padding: 0.45rem;
+  background: var(--marquee-gold);
+  color: #1e1a17;
+  border: none;
+  border-radius: 3px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.edit-poster-save-btn:hover:not(:disabled) {
+  background: var(--marquee-gold-bright);
+}
+
+.edit-poster-save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.edit-poster-remove-btn {
+  padding: 0.45rem 0.7rem;
+  background: transparent;
+  border: 1px solid var(--velvet);
+  color: var(--velvet-bright);
+  border-radius: 3px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.edit-poster-remove-btn:hover:not(:disabled) {
+  background: var(--velvet);
+  color: var(--ink);
+}
+
+.edit-poster-success {
+  font-size: 0.78rem;
+  color: var(--projector-teal-bright);
+  font-family: var(--font-mono);
+  margin: 0;
 }
 
 .modal-details h2 {
@@ -876,5 +1065,15 @@
 
   .movie-poster {
     height: 260px;
+  }
+
+  .movie-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 860px) {
+  .movie-list {
+    grid-template-columns: repeat(2, 1fr);
   }
 }

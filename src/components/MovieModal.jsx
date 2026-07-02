@@ -4,9 +4,11 @@ import TierBadge from './TierBadge'
 import TierRatingPicker from './TierRatingPicker'
 import DonutChart from './DonutChart'
 import ReviewSection from './ReviewSection'
+import EditPosterPanel from './EditPosterPanel'
 import { scoreToTier } from '../lib/tiers'
 
-export default function MovieModal({ movie, onClose, onUpdated }) {
+export default function MovieModal({ movie: initialMovie, onClose, onUpdated }) {
+  const [movie, setMovie] = useState(initialMovie)
   const [breakdown, setBreakdown] = useState([])
   const [totalRatings, setTotalRatings] = useState(0)
   const [averageScore, setAverageScore] = useState(0)
@@ -66,7 +68,15 @@ export default function MovieModal({ movie, onClose, onUpdated }) {
       .eq('id', movie.id)
       .single()
 
-    if (!error) onUpdated?.(data)
+    if (!error) {
+      setMovie(data)
+      onUpdated?.(data)
+    }
+  }
+
+  function handlePosterUpdated(updated) {
+    setMovie(updated)
+    onUpdated?.(updated)
   }
 
   return (
@@ -77,9 +87,15 @@ export default function MovieModal({ movie, onClose, onUpdated }) {
         </button>
 
         <div className="modal-body">
-          {movie.poster_url && (
-            <img src={movie.poster_url} alt={movie.title} className="modal-poster" />
-          )}
+          <div className="modal-left-col">
+            {movie.poster_url ? (
+              <img src={movie.poster_url} alt={movie.title} className="modal-poster" />
+            ) : (
+              <div className="modal-poster-empty">No poster</div>
+            )}
+
+            <EditPosterPanel movie={movie} onUpdated={handlePosterUpdated} />
+          </div>
 
           <div className="modal-details">
             <h2>
