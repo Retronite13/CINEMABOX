@@ -17,7 +17,7 @@ export default function HomePage() {
   return (
     <div className="home">
       <div className="home-header">
-        <h1>Movie Tier List</h1>
+        <h1>PARALLAX</h1>
         <Link to="/mood" className="mood-nav-link">🧭 Find by mood</Link>
       </div>
 
