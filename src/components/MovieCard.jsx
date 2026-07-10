@@ -1,12 +1,16 @@
+import { useNavigate } from 'react-router-dom'
 import TierBadge from './TierBadge'
 
-// Pure preview tile - poster, title, tier stamp, meta. No interactive
-// elements live on the card itself anymore; clicking anywhere on it
-// opens the MovieModal (handled by the parent MovieGrid), which is
-// where the chart and rating picker actually live.
-export default function MovieCard({ movie, onOpen }) {
+// Clicking a card now navigates to /movie/:slug - its own dedicated page
+// with a shareable URL. The old modal approach is replaced entirely.
+export default function MovieCard({ movie }) {
+  const navigate = useNavigate()
+
   return (
-    <button className="movie-card" onClick={() => onOpen(movie)}>
+    <button
+      className="movie-card"
+      onClick={() => navigate(`/movie/${movie.slug}`)}
+    >
       {movie.poster_url && (
         <img src={movie.poster_url} alt={movie.title} className="movie-poster" />
       )}
@@ -14,7 +18,9 @@ export default function MovieCard({ movie, onOpen }) {
       <div className="movie-info">
         <h3>
           {movie.title}{' '}
-          {movie.release_year && <span className="movie-year">({movie.release_year})</span>}
+          {movie.release_year && (
+            <span className="movie-year">({movie.release_year})</span>
+          )}
         </h3>
 
         <TierBadge tier={movie.tier} percentage={movie.percentage} />
