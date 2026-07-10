@@ -8,7 +8,6 @@ export default function AuthPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [info, setInfo] = useState('')
   const [loading, setLoading] = useState(false)
 
   const { signUp, signIn } = useAuth()
@@ -17,26 +16,26 @@ export default function AuthPage() {
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
-    setInfo('')
     setLoading(true)
 
     if (isSignUp) {
       const { error } = await signUp(username, email, password)
       setLoading(false)
-
       if (error) {
         setError(error.message)
       } else {
-        // Stay on this page - they need to click the link in their email
-        // before logging in, so send them straight to the login form.
-        setInfo(`Check ${email} for a verification link, then log in below.`)
-        setIsSignUp(false)
-        setPassword('')
+        // With email confirmation OFF, the account is active immediately
+        // so we sign them in straight away - no "check your email" step.
+        const { error: signInError } = await signIn(email, password)
+        if (signInError) {
+          setError(signInError.message)
+        } else {
+          navigate('/')
+        }
       }
     } else {
       const { error } = await signIn(email, password)
       setLoading(false)
-
       if (error) {
         setError(error.message)
       } else {
@@ -48,8 +47,6 @@ export default function AuthPage() {
   return (
     <div className="auth-page">
       <h2>🎬 {isSignUp ? 'Join CinemaBox' : 'Member Log In'}</h2>
-
-      {info && <p className="auth-info">{info}</p>}
 
       <form onSubmit={handleSubmit}>
         {isSignUp && (
@@ -87,11 +84,7 @@ export default function AuthPage() {
 
       <button
         className="auth-toggle"
-        onClick={() => {
-          setError('')
-          setInfo('')
-          setIsSignUp(!isSignUp)
-        }}
+        onClick={() => { setError(''); setIsSignUp(!isSignUp) }}
       >
         {isSignUp ? 'Already a member? Log in' : "Don't have an account? Sign up"}
       </button>

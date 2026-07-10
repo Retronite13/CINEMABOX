@@ -14,15 +14,14 @@ export function AuthProvider({ children }) {
 
   async function fetchProfile(userId) {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single()
-
-      if (!error) setProfile(data)
+      if (data) setProfile(data)
     } catch (err) {
-      console.error('Failed to fetch profile:', err.message)
+      console.error('fetchProfile error:', err.message)
     }
   }
 
@@ -45,46 +44,80 @@ export function AuthProvider({ children }) {
     return () => listener.subscription.unsubscribe()
   }, [])
 
-  // Creates the account with a username + password. Supabase emails a
-  // confirmation link automatically (since "Confirm email" is on) -
-  // the person clicks it, then logs in below. The "handle_new_user"
-  // trigger already creates their profile + CinemaBox ID at this point,
-  // it just stays unusable for login until the link is clicked.
   async function signUp(username, email, password) {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { username }, // read by the handle_new_user() trigger
-      },
-    })
+    // Step 1: check if username is already taken before even trying
+    const { data: existingUsername } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('username', username)
+      .maybeSingle()
 
-    if (!error) return { error: null }
-
-    // Log the raw error so the real cause (e.g. an email-sending
-    // failure) is visible in the browser console, since Supabase's
-    // own error message for that case can come back nearly empty.
-    console.error('signUp error:', error)
-
-    if (error.message?.toLowerCase().includes('profiles_username_key')) {
-      return { error: { message: 'That username is already taken.' } }
+    if (existingUsername) {
+      return { error: { message: 'That username is already taken — try another.' } }
     }
 
-    if (!error.message || error.message === '{}') {
-      return {
-        error: {
-          message:
-            'Could not send the verification email. This usually means Supabase\'s email sending limit was hit - see the chat for how to fix it.',
-        },
+    // Step 2: create the auth account
+    const { data, error } = await supabase.auth.signUp({ email, password })
+
+    if (error) {
+      console.error('signUp raw error:', JSON.stringify(error))
+      const msg = error.message || ''
+      if (msg.toLowerCase().includes('already registered') ||
+          msg.toLowerCase().includes('user_already_exists')) {
+        return { error: { message: 'A profile with this email already exists. Try logging in.' } }
+      }
+      if (!msg || msg === '{}') {
+        return { error: { message: 'A profile with this email already exists. Try logging in.' } }
+      }
+      return { error: { message: msg } }
+    }
+
+    // Step 3: the trigger may or may not have created the profile row.
+    // Upsert it explicitly here with the correct username so we're sure
+    // it exists and has exactly what the user typed, regardless of
+    // what the trigger did or didn't do.
+    if (data?.user) {
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id, cinemabox_id')
+        .eq('id', data.user.id)
+        .maybeSingle()
+
+      if (!existingProfile) {
+        // Trigger didn't fire or failed — create profile manually
+        const { data: seqData } = await supabase.rpc('nextval_cinemabox')
+        const cinemaboxId = seqData
+          ? `CB-${String(seqData).padStart(6, '0')}`
+          : `CB-${Date.now()}`
+
+        await supabase.from('profiles').insert({
+          id: data.user.id,
+          username,
+          cinemabox_id: cinemaboxId,
+        })
+      } else if (existingProfile) {
+        // Trigger fired but used email prefix — update to the real username
+        await supabase
+          .from('profiles')
+          .update({ username })
+          .eq('id', data.user.id)
       }
     }
 
-    return { error }
+    return { error: null }
   }
 
   async function signIn(email, password) {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error }
+    if (error) {
+      const msg = error.message || ''
+      if (msg.toLowerCase().includes('invalid login') ||
+          msg.toLowerCase().includes('invalid credentials')) {
+        return { error: { message: 'Incorrect email or password.' } }
+      }
+      return { error: { message: msg || 'Login failed. Please try again.' } }
+    }
+    return { error: null }
   }
 
   async function signOut() {

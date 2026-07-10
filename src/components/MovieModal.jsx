@@ -1,14 +1,18 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { useAuth } from '../context/AuthContext'
 import TierBadge from './TierBadge'
 import TierRatingPicker from './TierRatingPicker'
 import DonutChart from './DonutChart'
 import ReviewSection from './ReviewSection'
 import EditPosterPanel from './EditPosterPanel'
+import EditMoviePanel from './EditMoviePanel'
 import { scoreToTier } from '../lib/tiers'
 
 export default function MovieModal({ movie: initialMovie, onClose, onUpdated }) {
   const [movie, setMovie] = useState(initialMovie)
+  const [editing, setEditing] = useState(false)
+  const { profile } = useAuth()
   const [breakdown, setBreakdown] = useState([])
   const [totalRatings, setTotalRatings] = useState(0)
   const [averageScore, setAverageScore] = useState(0)
@@ -98,39 +102,63 @@ export default function MovieModal({ movie: initialMovie, onClose, onUpdated }) 
           </div>
 
           <div className="modal-details">
-            <h2>
-              {movie.title}{' '}
-              {movie.release_year && <span className="movie-year">({movie.release_year})</span>}
-            </h2>
+            {/* Admin edit/done toggle — sits at the top of the right column */}
+            {profile?.is_admin && (
+              <button
+                type="button"
+                className="edit-movie-toggle-btn"
+                onClick={() => setEditing((prev) => !prev)}
+              >
+                {editing ? '← Back to movie' : '✏️ Edit movie'}
+              </button>
+            )}
 
-            <TierBadge tier={movie.tier} percentage={movie.percentage} />
+            {editing ? (
+              <EditMoviePanel
+                movie={movie}
+                onUpdated={(updated) => {
+                  setMovie(updated)
+                  onUpdated?.(updated)
+                }}
+                onClose={() => setEditing(false)}
+              />
+            ) : (
+              <>
+                <h2>
+                  {movie.title}{' '}
+                  {movie.release_year && <span className="movie-year">({movie.release_year})</span>}
+                </h2>
 
-            <p className="movie-meta">
-              {movie.director && <>Dir. {movie.director} · </>}
-              {movie.runtime_minutes && <>{movie.runtime_minutes} min · </>}
-              {movie.genre}
-            </p>
+                <TierBadge tier={movie.tier} percentage={movie.percentage} />
 
-            {movie.description && <p className="movie-description">{movie.description}</p>}
+                <p className="movie-meta">
+                  {movie.director && <>Dir. {movie.director} · </>}
+                  {movie.runtime_minutes && <>{movie.runtime_minutes} min · </>}
+                  {movie.genre}
+                </p>
 
-            <div className="modal-chart-row">
-              {!loadingChart && (
-                <DonutChart
-                  breakdown={breakdown}
-                  averageScore={averageScore}
-                  totalRatings={totalRatings}
-                />
-              )}
-              <p className="donut-caption">
-                {totalRatings === 0
-                  ? 'No audience ratings yet - be the first.'
-                  : `Based on ${totalRatings} audience ${totalRatings === 1 ? 'rating' : 'ratings'}.`}
-              </p>
-            </div>
+                {movie.description && <p className="movie-description">{movie.description}</p>}
 
-            <TierRatingPicker movieId={movie.id} onRated={handleRated} />
+                <div className="modal-chart-row">
+                  {!loadingChart && (
+                    <DonutChart
+                      breakdown={breakdown}
+                      averageScore={averageScore}
+                      totalRatings={totalRatings}
+                    />
+                  )}
+                  <p className="donut-caption">
+                    {totalRatings === 0
+                      ? 'No audience ratings yet - be the first.'
+                      : `Based on ${totalRatings} audience ${totalRatings === 1 ? 'rating' : 'ratings'}.`}
+                  </p>
+                </div>
 
-            <ReviewSection movieId={movie.id} />
+                <TierRatingPicker movieId={movie.id} onRated={handleRated} />
+
+                <ReviewSection movieId={movie.id} />
+              </>
+            )}
           </div>
         </div>
       </div>

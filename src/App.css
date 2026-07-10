@@ -977,6 +977,113 @@
   margin: 0;
 }
 
+/* ===== Edit movie form (admin, inside modal) ===== */
+
+.edit-movie-toggle-btn {
+  background: transparent;
+  border: 1px solid rgba(243, 236, 224, 0.2);
+  color: var(--marquee-gold);
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.82rem;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  margin-bottom: 1rem;
+  display: inline-block;
+}
+
+.edit-movie-toggle-btn:hover {
+  border-color: var(--marquee-gold);
+  background: rgba(232, 163, 61, 0.08);
+}
+
+.edit-movie-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.edit-movie-form h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  color: var(--marquee-gold-bright);
+}
+
+.edit-field-label {
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: -0.2rem;
+}
+
+.edit-movie-form input,
+.edit-movie-form textarea {
+  padding: 0.5rem 0.65rem;
+  border: 1px solid rgba(243, 236, 224, 0.15);
+  border-radius: 3px;
+  background: var(--bg-void);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+}
+
+.edit-movie-form input:focus,
+.edit-movie-form textarea:focus {
+  outline: none;
+  border-color: var(--marquee-gold);
+}
+
+.edit-field-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.edit-movie-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+}
+
+.edit-movie-save-btn {
+  flex: 1;
+  padding: 0.6rem;
+  background: var(--marquee-gold);
+  color: #1e1a17;
+  border: none;
+  border-radius: 3px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.edit-movie-save-btn:hover:not(:disabled) {
+  background: var(--marquee-gold-bright);
+}
+
+.edit-movie-save-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.edit-movie-cancel-btn {
+  padding: 0.6rem 1.1rem;
+  background: transparent;
+  border: 1px solid rgba(243, 236, 224, 0.2);
+  color: var(--ink-muted);
+  border-radius: 3px;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.edit-movie-cancel-btn:hover {
+  border-color: var(--velvet-bright);
+  color: var(--velvet-bright);
+}
+
 .modal-details h2 {
   margin: 0 0 0.5rem;
   font-size: 1.55rem;
