@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { slugify } from '../lib/slugify'
+import TagPicker from './TagPicker'
 
 export default function EditMoviePanel({ movie, onUpdated, onClose }) {
   const { profile } = useAuth()
@@ -18,20 +19,24 @@ export default function EditMoviePanel({ movie, onUpdated, onClose }) {
 
   const [allMoods, setAllMoods] = useState([])
   const [selectedMoods, setSelectedMoods] = useState([])
+  const [selectedTagIds, setSelectedTagIds] = useState([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  
 
   useEffect(() => {
     async function load() {
-      const [{ data: moods }, { data: linked }] = await Promise.all([
+      const [{ data: moods }, { data: linkedMoods }, { data: linkedTags }] = await Promise.all([
         supabase.from('moods').select('*').order('name'),
         supabase.from('movie_moods').select('mood_id').eq('movie_id', movie.id),
+        supabase.from('movie_tags').select('tag_id').eq('movie_id', movie.id),
       ])
       setAllMoods(moods ?? [])
       // parseInt ensures mood IDs are always integers, never strings.
       // Without this, Supabase's client can pass them as strings which
       // Postgres then rejects with a type mismatch on the uuid column.
-      setSelectedMoods((linked ?? []).map((r) => parseInt(r.mood_id, 10)))
+      setSelectedMoods((linkedMoods ?? []).map((r) => parseInt(r.mood_id, 10)))
+      setSelectedTagIDs((linkedTags ?? []).map((r) => r.tag_id))
     }
     load()
   }, [movie.id])
@@ -104,6 +109,19 @@ export default function EditMoviePanel({ movie, onUpdated, onClose }) {
 
       if (insertError) {
         setError(`Saved movie details but mood insert failed: ${insertError.message}`)
+        setSaving(false)
+        return
+      }
+    }
+
+    // Step 3: replace custom tags
+    await supabase.from('movie_tags').delete().eq('movie_id', movie.id)
+    if (selectedTagIds.length > 0) {
+      const { error: tagError } = await supabase.from('movie_tags').insert(
+        selectedTagIds.map(tagId => ({ movie_id: movie.id, tag_id: tagId }))
+      )
+      if (tagError) {
+        setError(`Saved but tag update failed: ${tagError.message}`)
         setSaving(false)
         return
       }
@@ -186,6 +204,9 @@ export default function EditMoviePanel({ movie, onUpdated, onClose }) {
           </label>
         ))}
       </div>
+
+      <label className="edit-field-label">Custom tags</label>
+      <TagPicker selectedTagIds={selectedTagIds} onChange={setSelectedTagIds} />
 
       {error && <p className="auth-error">{error}</p>}
 

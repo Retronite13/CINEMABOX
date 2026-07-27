@@ -8,24 +8,24 @@ import DonutChart from '../components/DonutChart'
 import ReviewSection from '../components/ReviewSection'
 import EditPosterPanel from '../components/EditPosterPanel'
 import EditMoviePanel from '../components/EditMoviePanel'
+import TagDisplay from '../components/TagDisplay'
 import { scoreToTier } from '../lib/tiers'
 
 export default function MoviePage() {
   const { slug } = useParams()
-  const { profile } = useAuth()
+  const { user, profile } = useAuth()
   const navigate = useNavigate()
 
   const [movie, setMovie] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [editing, setEditing] = useState(false)
-
   const [breakdown, setBreakdown] = useState([])
   const [totalRatings, setTotalRatings] = useState(0)
   const [averageScore, setAverageScore] = useState(0)
   const [loadingChart, setLoadingChart] = useState(true)
+  const [movieTags, setMovieTags] = useState([])
 
-  // Fetch the movie by slug from movie_scores (same view the modal used)
   useEffect(() => {
     async function fetchMovie() {
       setLoading(true)
@@ -34,11 +34,16 @@ export default function MoviePage() {
         .select('*')
         .eq('slug', slug)
         .single()
-
       if (error || !data) {
         setError('Movie not found.')
       } else {
         setMovie(data)
+        // Fetch tags for this movie
+        const { data: tagLinks } = await supabase
+          .from('movie_tags')
+          .select('tags(id, name, slug)')
+          .eq('movie_id', data.id)
+        setMovieTags((tagLinks ?? []).map(r => r.tags))
       }
       setLoading(false)
     }
@@ -48,12 +53,10 @@ export default function MoviePage() {
   const loadBreakdown = useCallback(async () => {
     if (!movie) return
     setLoadingChart(true)
-
     const { data } = await supabase
       .from('ratings')
       .select('score')
       .eq('movie_id', movie.id)
-
     if (data) {
       const counts = {}
       let sum = 0
@@ -66,21 +69,15 @@ export default function MoviePage() {
       setTotalRatings(data.length)
       setAverageScore(data.length ? sum / data.length : 0)
     }
-
     setLoadingChart(false)
   }, [movie])
 
-  useEffect(() => {
-    loadBreakdown()
-  }, [loadBreakdown])
+  useEffect(() => { loadBreakdown() }, [loadBreakdown])
 
   async function handleRated() {
     await loadBreakdown()
     const { data } = await supabase
-      .from('movie_scores')
-      .select('*')
-      .eq('id', movie.id)
-      .single()
+      .from('movie_scores').select('*').eq('id', movie.id).single()
     if (data) setMovie(data)
   }
 
@@ -95,28 +92,20 @@ export default function MoviePage() {
   return (
     <div className="movie-page-shell">
       <Link to="/" className="back-link">← Back to all movies</Link>
-
       <div className="movie-page-body">
-        {/* Left column: poster + admin poster editor */}
         <div className="movie-page-left">
-          {movie.poster_url ? (
-            <img src={movie.poster_url} alt={movie.title} className="movie-page-poster" />
-          ) : (
-            <div className="modal-poster-empty">No poster</div>
-          )}
+          {movie.poster_url
+            ? <img src={movie.poster_url} alt={movie.title} className="movie-page-poster" />
+            : <div className="modal-poster-empty">No poster</div>}
           <EditPosterPanel
             movie={movie}
             onUpdated={(updated) => setMovie((prev) => ({ ...prev, ...updated }))}
           />
         </div>
 
-        {/* Right column: details or edit form */}
         <div className="movie-page-details">
           {profile?.is_admin && (
-            <button
-              className="edit-movie-toggle-btn"
-              onClick={() => setEditing((prev) => !prev)}
-            >
+            <button className="edit-movie-toggle-btn" onClick={() => setEditing(p => !p)}>
               {editing ? '← Back to movie' : '✏️ Edit movie'}
             </button>
           )}
@@ -126,10 +115,8 @@ export default function MoviePage() {
               movie={movie}
               onUpdated={(updated) => {
                 setMovie(updated)
-                // If the slug changed, navigate to the new URL
-                if (updated.slug && updated.slug !== slug) {
+                if (updated.slug && updated.slug !== slug)
                   navigate(`/movie/${updated.slug}`, { replace: true })
-                }
               }}
               onClose={() => setEditing(false)}
             />
@@ -137,31 +124,20 @@ export default function MoviePage() {
             <>
               <h1 className="movie-page-title">
                 {movie.title}
-                {movie.release_year && (
-                  <span className="movie-year"> ({movie.release_year})</span>
-                )}
+                {movie.release_year && <span className="movie-year"> ({movie.release_year})</span>}
               </h1>
-
               <TierBadge tier={movie.tier} percentage={movie.percentage} />
-
+              <TagDisplay tags={movieTags} />
               <p className="movie-meta">
                 {movie.director && <>Dir. {movie.director} · </>}
                 {movie.runtime_minutes && <>{movie.runtime_minutes} min · </>}
                 {movie.genre}
               </p>
+              {movie.description && <p className="movie-description">{movie.description}</p>}
 
-              {movie.description && (
-                <p className="movie-description">{movie.description}</p>
-              )}
-
-              {/* Audience rating donut chart - animates in when page loads */}
               <div className="modal-chart-row">
                 {!loadingChart && (
-                  <DonutChart
-                    breakdown={breakdown}
-                    averageScore={averageScore}
-                    totalRatings={totalRatings}
-                  />
+                  <DonutChart breakdown={breakdown} averageScore={averageScore} totalRatings={totalRatings} />
                 )}
                 <p className="donut-caption">
                   {totalRatings === 0
@@ -170,9 +146,19 @@ export default function MoviePage() {
                 </p>
               </div>
 
-              <TierRatingPicker movieId={movie.id} onRated={handleRated} />
+              {!user && (
+                <div className="guest-cta">
+                  <p className="guest-cta-heading">🎬 Want to rate this film?</p>
+                  <p className="guest-cta-sub">Join CinemaBox free — rate movies, write reviews, and share your verdicts.</p>
+                  <div className="guest-cta-buttons">
+                    <Link to="/auth" className="cta-join-btn">Join CinemaBox</Link>
+                    <Link to="/auth" className="cta-login-btn">Log in</Link>
+                  </div>
+                </div>
+              )}
 
-              <ReviewSection movieId={movie.id} />
+              {user && <TierRatingPicker movieId={movie.id} onRated={handleRated} />}
+              <ReviewSection movieId={movie.id} movie={movie} />
             </>
           )}
         </div>
